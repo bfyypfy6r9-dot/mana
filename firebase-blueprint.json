@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with registration details, church membership, and approval status.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The Firebase Auth user ID." },
+        "email": { "type": "string", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's full name." },
+        "district": { "type": "string", "description": "The district level affiliation, fixed to 'Parque dos Coqueiros'." },
+        "church": { "type": "string", "description": "The specific church of the district." },
+        "isApproved": { "type": "boolean", "description": "Whether the user is approved by the admin." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Registration date." }
+      },
+      "required": ["uid", "email", "displayName", "district", "church", "isApproved", "createdAt"]
+    },
+    "ChurchData": {
+      "title": "ChurchData",
+      "description": "Monthly subscription and school activity goals and realized numbers of a church.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID composed of church name and month-year." },
+        "church": { "type": "string", "description": "Name of the church." },
+        "monthYear": { "type": "string", "description": "Year and month of the statistics (YYYY-MM)." },
+        "activeMembersMeta": { "type": "number", "description": "Meta for active members." },
+        "activeMembersRealizado": { "type": "number", "description": "Realized active members." },
+        "subscribersQtyMeta": { "type": "number", "description": "Meta for quantity of subscribers." },
+        "subscribersQtyRealizado": { "type": "number", "description": "Realized quantity of subscribers." },
+        "subscribersRenewedMeta": { "type": "number", "description": "Meta for renewed subscriptions." },
+        "subscribersRenewedRealizado": { "type": "number", "description": "Realized renewed subscriptions." },
+        "noSubscribersQtyMeta": { "type": "number", "description": "Meta for quantity without subscriptions." },
+        "noSubscribersQtyRealizado": { "type": "number", "description": "Realized quantity without subscriptions." },
+        "noSubscribersNewMeta": { "type": "number", "description": "Meta for new subscribers." },
+        "noSubscribersNewRealizado": { "type": "number", "description": "Realized new subscribers." },
+        "churchDonationsMeta": { "type": "number", "description": "Meta for church donations." },
+        "churchDonationsRealizado": { "type": "number", "description": "Realized church donations." },
+        "churchDonorsMeta": { "type": "number", "description": "Meta for number of donors." },
+        "churchDonorsRealizado": { "type": "number", "description": "Realized number of donors." },
+        "childrenMeta": { "type": "number", "description": "Meta for kids (0 to 7 years)." },
+        "childrenRealizado": { "type": "number", "description": "Realized kids (0 to 7 years)." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Saves system time of last update." },
+        "updatedBy": { "type": "string", "description": "The UID of the user who made the entry." }
+      },
+      "required": [
+        "id", "church", "monthYear",
+        "activeMembersMeta", "activeMembersRealizado",
+        "subscribersQtyMeta", "subscribersQtyRealizado",
+        "subscribersRenewedMeta", "subscribersRenewedRealizado",
+        "noSubscribersQtyMeta", "noSubscribersQtyRealizado",
+        "noSubscribersNewMeta", "noSubscribersNewRealizado",
+        "churchDonationsMeta", "churchDonationsRealizado",
+        "churchDonorsMeta", "churchDonorsRealizado",
+        "childrenMeta", "childrenRealizado",
+        "updatedAt", "updatedBy"
+      ]
+    },
+    "FeedPost": {
+      "title": "FeedPost",
+      "description": "Feed dynamic and micro-social post containing words of incentive and optionally a picture.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Post document ID." },
+        "userId": { "type": "string", "description": "The poster user UID." },
+        "userName": { "type": "string", "description": "Full name of the post author." },
+        "church": { "type": "string", "description": "The poster's church." },
+        "text": { "type": "string", "description": "Body message." },
+        "imageUrl": { "type": "string", "description": "Uploaded image URL or Base64 data." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time the post was created." }
+      },
+      "required": ["id", "userId", "userName", "church", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Information and approval state for all district members."
+    },
+    "/churchData/{churchDataId}": {
+      "schema": { "$ref": "#/entities/ChurchData" },
+      "description": "Monthly targets and actual progress inputs."
+    },
+    "/feed/{postId}": {
+      "schema": { "$ref": "#/entities/FeedPost" },
+      "description": "Feed post submissions containing encouragement text and images."
+    }
+  }
+}

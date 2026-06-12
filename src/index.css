@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FAF6F0; /* Soft, eye-safe warm cream background */
+  color: #1e293b; /* Dark slate 800 text for sharp readability */
+  min-height: 100vh;
+}
+
+/* Glassmorphism custom light components */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 142, 88, 0.15); /* Soft clay tint border */
+  color: #334155;
+}
+
+.glass-panel-active {
+  background: rgba(16, 185, 129, 0.08); /* Soft emerald green tint */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #065f46;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 142, 88, 0.18);
+  box-shadow: 0 10px 25px -5px rgba(120, 53, 15, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+.glass-input {
+  background: #ffffff;
+  border: 1px solid rgba(229, 142, 88, 0.25);
+  color: #0f172a;
+}
+
+.glass-input:focus {
+  background: #ffffff;
+  border-color: #10b981; /* Focus to emerald */
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Custom gorgeous scrollbar styled for sandy light theme */
+::-webkit-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 53, 15, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 53, 15, 0.3);
+}
+
+/* Page transitions fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
+   PREMIUM MINIMALIST LIGHT-THEME OVERRIDES FOR ULTRA-READABILITY
+   Translates compiled utility classes into a clean peach, cream, and slate layout
+   ========================================================================== */
+
+/* Overriding dark background and text helper classes */
+.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(229, 142, 88, 0.25) !important;
+}
+
+.bg-slate-900\/95 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.bg-slate-950\/80 {
+  background-color: rgba(120, 53, 15, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.border-white\/10 {
+  border-color: rgba(229, 142, 88, 0.18) !important;
+}
+
+.border-white\/15 {
+  border-color: rgba(229, 142, 88, 0.25) !important;
+}
+
+.border-white\/20 {
+  border-color: rgba(229, 142, 88, 0.32) !important;
+}
+
+/* High contrast inputs and selectors */
+input, select, textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500;
+}
+
+/* Light text color mappings */
+.text-white {
+  color: #1e293b !important;
+}
+
+.text-slate-100 {
+  color: #1e293b !important;
+}
+
+.text-slate-200 {
+  color: #334155 !important;
+}
+
+.text-slate-300 {
+  color: #475569 !important;
+}
+
+.text-slate-350 {
+  color: #57534e !important;
+}
+
+.text-slate-400 {
+  color: #64748b !important;
+}
+
+.text-slate-500 {
+  color: #78716c !important;
+}
+
+/* Interactive item highlights */
+.hover\:text-white:hover {
+  color: #78350f !important;
+}
+
+/* Overriding emerald colors to dark emerald for clear visual reading on light panels */
+.text-emerald-300 {
+  color: #047857 !important; /* Emerald 700 */
+  font-weight: 700 !important;
+}
+
+.text-emerald-400 {
+  color: #047857 !important; /* Emerald 700 */
+  font-weight: 700 !important;
+}
+
+.text-emerald-250 {
+  color: #115e59 !important;
+}
+
+/* Overriding warning and accent amber/yellow values for deep contrast on light bg */
+.text-amber-200 {
+  color: #78350f !important; /* Rich deep amber/brown */
+  font-weight: 600 !important;
+}
+
+.text-amber-300 {
+  color: #854d0e !important; /* Deep warm amber/brown */
+  font-weight: 700 !important;
+}
+
+.text-amber-350 {
+  color: #78350f !important;
+  font-weight: 600 !important;
+}
+
+.text-amber-400 {
+  color: #b45309 !important; /* Amber 700 */
+  font-weight: 700 !important;
+}
+
+.bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.bg-emerald-500\/15 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+.border-emerald-500\/20 {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.border-emerald-500\/30 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+/* General improvements for table columns / lists */
+div[id="app_viewport"] .bg-white\/5 {
+  box-shadow: 0 4px 15px -3px rgba(120, 53, 15, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+}

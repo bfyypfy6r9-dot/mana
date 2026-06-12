@@ -1,0 +1,184 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : {};
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token != null && 
+        'email' in request.auth.token && 
+        request.auth.token.email in [
+          "pedrorafaela_araujo@hotmail.com", 
+          "prps2013araujo@gmail.com"
+        ];
+    }
+
+    function isApprovedUser() {
+      return isSignedIn() && (
+        isAdmin() || 
+        getUserData().get('isApproved', false) == true
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Users Collection rules
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin() || isApprovedUser());
+      allow list: if isSignedIn() && isAdmin();
+      
+      // On creation, a normal user must be set to unapproved and correct district/churches
+      allow create: if isSignedIn() && request.auth.uid == userId && 
+        isValidId(userId) &&
+        request.resource.data.email is string &&
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 200 &&
+        request.resource.data.district == "Parque dos Coqueiros" &&
+        request.resource.data.church in ["Guajiru", "Jardim Petrópolis", "Vale Dourado 1", "Vale Dourado 2", "Parque dos Coqueiros 1", "Parque dos Coqueiros 2"] &&
+        (request.resource.data.isApproved == false || isAdmin()) &&
+        request.resource.data.createdAt == request.time;
+        
+      // For updates, normal user can only update displayName, while admin can update everything (like approval)
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          request.auth.uid == userId &&
+          request.resource.data.isApproved == existing().isApproved &&
+          request.resource.data.district == existing().district &&
+          request.resource.data.church == existing().church &&
+          request.resource.data.createdAt == existing().createdAt &&
+          request.resource.data.email == existing().email &&
+          request.resource.data.displayName is string &&
+          request.resource.data.displayName.size() <= 200
+        )
+      );
+      
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    function isValidManaData(data) {
+      return data.church in ["Guajiru", "Jardim Petrópolis", "Vale Dourado 1", "Vale Dourado 2", "Parque dos Coqueiros 1", "Parque dos Coqueiros 2"] &&
+        data.monthYear is string && data.monthYear.matches('^\\d{4}-\\d{2}$') &&
+        data.activeMembersTotal is number && data.activeMembersTotal >= 0 &&
+        data.activeMembersMeta is number && data.activeMembersMeta >= 0 &&
+        data.subscribersTotal is number && data.subscribersTotal >= 0 &&
+        data.subscribersRealizado is number && data.subscribersRealizado >= 0 &&
+        data.noSubscribersTotal is number && data.noSubscribersTotal >= 0 &&
+        data.noSubscribersRealizado is number && data.noSubscribersRealizado >= 0 &&
+        data.churchDonationsValue is number && data.churchDonationsValue >= 0 &&
+        data.churchDonorsMeta is number && data.churchDonorsMeta >= 0 &&
+        data.churchDonorsRealizado is number && data.churchDonorsRealizado >= 0 &&
+        data.activity1 is bool &&
+        data.activity2 is bool &&
+        data.activity3 is bool &&
+        data.activity4 is bool &&
+        data.activity5 is bool &&
+        data.pontuacaoFinal is number &&
+        data.updatedBy is string &&
+        data.updatedAt == request.time;
+    }
+
+    match /mana_data/{manaDataId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      
+      allow create: if isSignedIn() && isApprovedUser() && 
+        isValidId(manaDataId) &&
+        isValidManaData(request.resource.data) && (
+          isAdmin() || 
+          request.resource.data.church == getUserData().get('church', '')
+        );
+        
+      allow update: if isSignedIn() && isApprovedUser() && 
+        isValidManaData(request.resource.data) && (
+          isAdmin() || (
+            request.resource.data.church == existing().church &&
+            request.resource.data.church == getUserData().get('church', '')
+          )
+        );
+        
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Helper validation for ChurchData schema
+    function isValidChurchData(data) {
+      return data.church in ["Guajiru", "Jardim Petrópolis", "Vale Dourado 1", "Vale Dourado 2", "Parque dos Coqueiros 1", "Parque dos Coqueiros 2"] &&
+        data.monthYear is string && data.monthYear.matches('^\\d{4}-\\d{2}$') &&
+        data.activeMembersMeta is number && data.activeMembersMeta >= 0 &&
+        data.activeMembersRealizado is number && data.activeMembersRealizado >= 0 &&
+        data.subscribersQtyMeta is number && data.subscribersQtyMeta >= 0 &&
+        data.subscribersQtyRealizado is number && data.subscribersQtyRealizado >= 0 &&
+        data.subscribersRenewedMeta is number && data.subscribersRenewedMeta >= 0 &&
+        data.subscribersRenewedRealizado is number && data.subscribersRenewedRealizado >= 0 &&
+        data.noSubscribersQtyMeta is number && data.noSubscribersQtyMeta >= 0 &&
+        data.noSubscribersQtyRealizado is number && data.noSubscribersQtyRealizado >= 0 &&
+        data.noSubscribersNewMeta is number && data.noSubscribersNewMeta >= 0 &&
+        data.noSubscribersNewRealizado is number && data.noSubscribersNewRealizado >= 0 &&
+        data.churchDonationsMeta is number && data.churchDonationsMeta >= 0 &&
+        data.churchDonationsRealizado is number && data.churchDonationsRealizado >= 0 &&
+        data.churchDonorsMeta is number && data.churchDonorsMeta >= 0 &&
+        data.churchDonorsRealizado is number && data.churchDonorsRealizado >= 0 &&
+        data.childrenMeta is number && data.childrenMeta >= 0 &&
+        data.childrenRealizado is number && data.childrenRealizado >= 0 &&
+        data.updatedBy is string &&
+        data.updatedAt == request.time;
+    }
+
+    // ChurchData Collection rules
+    match /churchData/{churchDataId} {
+      // Approved users can view stats for all churches to compute rankings
+      allow get, list: if isSignedIn() && isApprovedUser();
+      
+      allow create: if isSignedIn() && isApprovedUser() && 
+        isValidId(churchDataId) &&
+        isValidChurchData(request.resource.data) && (
+          isAdmin() || 
+          request.resource.data.church == getUserData().get('church', '')
+        );
+        
+      allow update: if isSignedIn() && isApprovedUser() && 
+        isValidChurchData(request.resource.data) && (
+          isAdmin() || (
+            request.resource.data.church == existing().church &&
+            request.resource.data.church == getUserData().get('church', '')
+          )
+        );
+        
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Feed Collection rules
+    match /feed/{postId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      
+      allow create: if isSignedIn() && isApprovedUser() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.text is string &&
+        request.resource.data.imageUrl is string &&
+        request.resource.data.church in ["Guajiru", "Jardim Petrópolis", "Vale Dourado 1", "Vale Dourado 2", "Parque dos Coqueiros 1", "Parque dos Coqueiros 2"] &&
+        (isAdmin() || request.resource.data.church == getUserData().get('church', ''));
+        
+      allow update: if isSignedIn() && isApprovedUser() && 
+        request.resource.data.text is string &&
+        request.resource.data.imageUrl is string &&
+        (isAdmin() || resource.data.userId == request.auth.uid);
+        
+      allow delete: if isSignedIn() && isApprovedUser() && (
+        isAdmin() || resource.data.userId == request.auth.uid
+      );
+    }
+  }
+}
+

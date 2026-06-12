@@ -1,0 +1,8 @@
+{
+  "name": "Maná",
+  "description": "Sistema de gestão e incentivo às assinaturas da Escola Sabatina no Distrito Parque dos Coqueiros, com ranking competitivo, feed social e relatórios administrativos de metas do distrito.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
