@@ -111,7 +111,6 @@ export default function FeedSection({ userProfile }: FeedSectionProps) {
           const formData = new FormData();
           formData.append('image', selectedFile);
           
-          // Chave do ImgBB inserida diretamente aqui
           const imgbbKey = "7a40c04d86d6369c3e11d863610a223c";
 
           const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
@@ -147,4 +146,267 @@ export default function FeedSection({ userProfile }: FeedSectionProps) {
       removeSelectedFile();
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(`Ocorreu um erro ao enviar sua publicação: ${err.message || "Ver
+      setErrorMsg(`Ocorreu um erro ao enviar sua publicação: ${err.message || "Verifique sua conexão."}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const pathForDelete = `feed/${postId}`;
+    try {
+      await deleteDoc(doc(db, 'feed', postId));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Não foi possível excluir esta postagem.");
+      handleFirestoreError(err, OperationType.DELETE, pathForDelete);
+    }
+  };
+
+  const handleToggleLike = async (postId: string, currentLikes: string[] = []) => {
+    const postRef = doc(db, 'feed', postId);
+    const hasLiked = currentLikes.includes(userProfile.uid);
+    try {
+      if (hasLiked) {
+        await updateDoc(postRef, {
+          likes: arrayRemove(userProfile.uid)
+        });
+      } else {
+        await updateDoc(postRef, {
+          likes: arrayUnion(userProfile.uid)
+        });
+      }
+    } catch (err) {
+      console.error("Erro ao curtir:", err);
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    
+    const postRef = doc(db, 'feed', postId);
+    const newCommentData = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+      userId: userProfile.uid,
+      userName: userProfile.displayName || 'Usuário',
+      text: commentText.trim(),
+      createdAt: Date.now()
+    };
+    
+    try {
+      await updateDoc(postRef, {
+        comments: arrayUnion(newCommentData)
+      });
+      setCommentText('');
+      setCommentingPostId(null);
+    } catch (err) {
+      console.error("Erro ao comentar:", err);
+    }
+  };
+
+  const handleDeleteComment = async (postId: string, comment: any) => {
+    if (!confirm("Tem certeza que deseja apagar este comentário?")) return;
+    const postRef = doc(db, 'feed', postId);
+    try {
+      await updateDoc(postRef, {
+        comments: arrayRemove(comment)
+      });
+    } catch (err) {
+      console.error("Erro ao remover comentário:", err);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in relative z-10 text-slate-200">
+      
+      {/* Dynamic welcome header */}
+      <div className="bg-white/5 p-5 rounded-2xl border border-white/10">
+        <div className="flex gap-4 items-start">
+          <div className="h-10 w-10 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl flex items-center justify-center font-bold flex-shrink-0">
+            {userProfile.displayName.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1">
+            <h2 className="font-bold text-white text-lg">Feed do Maná</h2>
+          </div>
+        </div>
+      </div>
+
+      {errorMsg && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 text-xs flex gap-2">
+          <span>⚠️ {errorMsg}</span>
+        </div>
+      )}
+
+      {/* Post creator form */}
+      <form onSubmit={handleSubmit} className="bg-white/5 p-5 rounded-3xl border border-white/10 space-y-4">
+        <div>
+          <textarea
+            id="feed_post_textarea"
+            rows={3}
+            placeholder={`No que você está pensando, ${userProfile.displayName}?`}
+            value={msgText}
+            onChange={(e) => setMsgText(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 placeholder-slate-400 text-white text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none font-sans"
+            maxLength={1000}
+          />
+        </div>
+
+        {/* Thumbnail preview */}
+        {previewUrl && (
+          <div id="post_img_preview" className="relative inline-block rounded-xl overflow-hidden border border-white/10 shadow-sm max-w-[240px]">
+            <img src={previewUrl} alt="Preview" referrerPolicy="no-referrer" className="max-h-48 object-cover rounded-xl" />
+            <button
+              type="button"
+              id="remove_preview_btn"
+              onClick={removeSelectedFile}
+              className="absolute top-2 right-2 p-1 bg-red-650/85 hover:bg-red-600 rounded-full text-white cursor-pointer transition-colors"
+              title="Remover imagem"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              id="feed_img_picker_btn"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-2 text-slate-300 hover:text-emerald-400 text-xs font-semibold rounded-lg hover:bg-white/5 cursor-pointer transition-colors"
+            >
+              <Camera size={16} />
+              <span>Adicionar Foto</span>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="post_submit_btn"
+            disabled={loading || (!msgText.trim() && !selectedFile)}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Publicando...</span>
+              </>
+            ) : (
+              <>
+                <Send size={14} />
+                <span>Publicar</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+
+      {/* Posts Section */}
+      <div id="posts_list" className="space-y-4">
+        {fetching ? (
+          <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-3xl border border-white/10 space-y-3">
+            <Loader2 size={32} className="text-emerald-400 animate-spin" />
+            <p className="text-sm text-slate-400 uppercase font-bold tracking-wider">Recarregando mural social...</p>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center p-12 bg-white/5 rounded-3xl border border-white/10 text-slate-400 space-y-2">
+            <MessageSquareShare size={40} className="mx-auto opacity-40 text-emerald-400" />
+            <p className="font-bold text-slate-300">Nenhuma postagem ainda.</p>
+            <p className="text-xs text-slate-450">Seja o primeiro a incentivar o distrito!</p>
+          </div>
+        ) : (
+          posts.map((post) => {
+            const isMyPost = post.userId === userProfile.uid;
+            return (
+              <div 
+                key={post.id} 
+                className="bg-white/5 rounded-3xl border border-white/10 p-5 hover:border-white/15 transition-all flex flex-col space-y-3 relative group"
+              >
+                {/* Header info */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 bg-emerald-500/15 text-emerald-400 border border-emerald-500/10 font-bold rounded-lg flex items-center justify-center select-none text-sm">
+                      {post.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm leading-snug">{post.userName}</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                        <span className="flex items-center gap-0.5 text-emerald-400 font-bold">
+                          <Church size={10} /> IASD {post.church}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {post.createdAt instanceof Date 
+                            ? post.createdAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) 
+                            : ''
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Deletion button only for owner or admin */}
+                  {(isMyPost || userProfile.email === "pedrorafaela_araujo@hotmail.com" || userProfile.email === "prps2013araujo@gmail.com") && (
+                    <div className="flex items-center gap-2">
+                      {confirmDeleteId === post.id ? (
+                        <>
+                          <button 
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors font-semibold"
+                          >
+                            Excluir
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(post.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-lg md:opacity-0 md:group-hover:opacity-100 transition-all cursor-pointer border border-transparent hover:border-red-500/10"
+                          title="Excluir publicação"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Message body */}
+                <p className="text-sm text-slate-300 leading-relaxed break-words whitespace-pre-wrap">{post.text}</p>
+
+                {/* Post Attachment */}
+                {post.imageUrl && (
+                  <div className="rounded-2xl overflow-hidden border border-white/10 max-h-96 mt-2 flex items-center justify-center bg-white/10/40">
+                    <img 
+                      src={post.imageUrl} 
+                      alt="Publicada por usuário" 
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      className="max-h-96 w-full object-cover rounded-2xl"
+                    />
+                  </div>
+                )}
+
+                {/* Likes and Comments */}
+                <div className="flex items-center gap-4 mt-2 pt-3 border-t border-white/5">
+                  <button 
+                    type="button"
+                    onClick={() => handleToggleLike(post.id, post.likes)} 
+                    className={`flex items-center gap-1.5 text-xs font-semibold
