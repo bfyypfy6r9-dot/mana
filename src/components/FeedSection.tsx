@@ -409,4 +409,86 @@ export default function FeedSection({ userProfile }: FeedSectionProps) {
                   <button 
                     type="button"
                     onClick={() => handleToggleLike(post.id, post.likes)} 
-                    className={`flex items-center gap-1.5 text-xs font-semibold
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-md transition-colors cursor-pointer ${post.likes?.includes(userProfile.uid) ? 'text-red-400 bg-red-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    <Heart size={16} className={post.likes?.includes(userProfile.uid) ? 'fill-current' : ''} />
+                    <span>{post.likes?.length || 0}</span>
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setCommentingPostId(commentingPostId === post.id ? null : post.id)}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <MessageCircle size={16} />
+                    <span>{post.comments?.length || 0}</span>
+                  </button>
+                </div>
+
+                {/* Comments Section */}
+                {(post.comments && post.comments.length > 0 || commentingPostId === post.id) && (
+                  <div className="mt-3 bg-white/30 rounded-2xl p-4 space-y-3 border border-white/5">
+                    {/* Render existing comments */}
+                    {post.comments && post.comments.map(comment => (
+                      <div key={comment.id} className="flex gap-2 group/comment">
+                        <div className="h-6 w-6 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/10 font-bold flex items-center justify-center text-[10px] shrink-0">
+                          {comment.userName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <div className="bg-white/5 border border-white/5 rounded-xl rounded-tl-none p-2.5 relative">
+                            <span className="text-xs font-bold text-white mb-0.5 block">{comment.userName}</span>
+                            <p className="text-xs text-slate-300 break-words">{comment.text}</p>
+                            
+                            {/* Comment Delete Button */}
+                            {(comment.userId === userProfile.uid || userProfile.email === "pedrorafaela_araujo@hotmail.com" || userProfile.email === "prps2013araujo@gmail.com") && (
+                              <button 
+                                type="button"
+                                onClick={() => handleDeleteComment(post.id, comment)}
+                                className="absolute top-2 right-2 text-slate-400 hover:text-red-400 md:opacity-0 md:group-hover/comment:opacity-100 transition-opacity cursor-pointer"
+                                title="Apagar comentário"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                          <span className="text-[9px] text-slate-400 ml-1 mt-1 block">
+                            {new Date(comment.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Comment Input Box */}
+                    {commentingPostId === post.id && (
+                      <form onSubmit={(e) => handleAddComment(e, post.id)} className="flex items-center gap-2 mt-2 pt-2">
+                        <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/10 font-bold flex items-center justify-center text-xs shrink-0">
+                          {userProfile.displayName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            placeholder="Escreva um comentário..."
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 placeholder-slate-500 text-white text-xs rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 focus:border-emerald-500/40"
+                            autoFocus
+                          />
+                          <button
+                            type="submit"
+                            disabled={!commentText.trim()}
+                            className="absolute right-1 top-1.5 p-1 text-emerald-500 hover:bg-emerald-500/10 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
+                          >
+                            <Send size={12} />
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
